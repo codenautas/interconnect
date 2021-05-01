@@ -1,0 +1,3 @@
+{
+    "window.title": "🌉 ${dirty}${separator}${rootName}${separator}${activeEditorMedium}"
+}

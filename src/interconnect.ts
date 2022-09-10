@@ -1,36 +1,43 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Requester = exports.conclude = void 0;
-const http = require("https");
-// import * as http from "http";
-const fs_1 = require("fs");
-const querystring = require("querystring");
-function conclude(resolve, reject, message) {
+
+import {promises as fs} from "fs"
+import * as http from "https"
+import * as querystring from "querystring"
+
+export type TiposPaquete = 'text' | ''
+export type Verbs = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+
+export function conclude(resolve: () => void, reject: (err?: Error | undefined) => void, message?: string): (err?: Error | undefined) => void{
     return function (err) {
         if (err) {
-            reject(err);
+            reject(err)
         }
         else {
             if (message) {
-                console.log(message);
+                console.log(message)
             }
-            resolve();
+            resolve()
         }
-    };
-}
-exports.conclude = conclude;
-class Requester {
-    constructor(URL, BASE_PATH) {
-        this.URL = URL;
-        this.BASE_PATH = BASE_PATH;
     }
-    async requerimiento(path, data2send, headers, tipo, method) {
+}
+
+export class Requester {
+    logFileName?: string
+    constructor(private URL:string, private BASE_PATH:string) {
+    }
+    async requerimiento<TRec, T2Send extends {}>(
+        path: string, 
+        data2send: T2Send, 
+        headers: http.RequestOptions['headers'], 
+        tipo: TiposPaquete, 
+        method: Verbs | null
+    ):Promise<TRec> {
         const postData = tipo == 'text' && method != 'GET' ? JSON.stringify(data2send) : querystring.stringify(data2send);
-        var data = [];
+        var data = [] as string[];
         if (this.logFileName) {
-            await fs_1.promises.appendFile(this.logFileName, (method || 'POST') + ' ' + this.BASE_PATH + path + '\n', 'utf8');
-            await fs_1.promises.appendFile(this.logFileName, JSON.stringify(data2send) + '\n', 'utf8');
-            await fs_1.promises.appendFile(this.logFileName, '   equivale a:\n', 'utf8');
+            await fs.appendFile(this.logFileName, (method || 'POST') + ' ' + this.BASE_PATH + path + '\n', 'utf8');
+            await fs.appendFile(this.logFileName, JSON.stringify(data2send) + '\n', 'utf8');
+            await fs.appendFile(this.logFileName, '   equivale a:\n', 'utf8');
         }
         var reqParams = {
             method: method || 'POST',
@@ -42,9 +49,9 @@ class Requester {
             path: this.BASE_PATH + path + (method == 'GET' ? '?' + postData : ''),
         };
         if (this.logFileName) {
-            await fs_1.promises.appendFile(this.logFileName, JSON.stringify(reqParams, null, '  ') + '\n', 'utf8');
+            await fs.appendFile(this.logFileName, JSON.stringify(reqParams, null, '  ') + '\n', 'utf8');
         }
-        var result = await new Promise((resolve, reject) => {
+        var result = await new Promise<string>((resolve, reject) => {
             var req = http.request(this.URL, reqParams, (res) => {
                 res.on('data', (chunk) => {
                     data.push(chunk);
@@ -63,15 +70,12 @@ class Requester {
         });
         var text = result;
         if (this.logFileName) {
-            await fs_1.promises.appendFile(this.logFileName, text + '\n\n', 'utf8');
+            await fs.appendFile(this.logFileName, text + '\n\n', 'utf8');
         }
         try {
             return JSON.parse(text);
-        }
-        catch (err) {
+        } catch (err) {
             throw new Error(text);
         }
     }
 }
-exports.Requester = Requester;
-//# sourceMappingURL=interconnect.js.map

@@ -29,24 +29,26 @@ export class Requester {
         path: string, 
         data2send: T2Send, 
         headers: http.RequestOptions['headers'], 
-        tipo: TiposPaquete, 
-        method: Verbs | null
+        tipo?: TiposPaquete, 
+        method?: Verbs | null
     ):Promise<TRec> {
-        const postData = tipo == 'text' && method != 'GET' ? JSON.stringify(data2send) : querystring.stringify(data2send);
+        method = method || 'POST'
+        const postData = method == 'GET' ? null : tipo == 'text' ? JSON.stringify(data2send) : querystring.stringify(data2send)
+        const queryData = method == 'GET' ? '?' + querystring.stringify(data2send) : ''
         var data = [] as string[];
         if (this.logFileName) {
-            await fs.appendFile(this.logFileName, (method || 'POST') + ' ' + this.BASE_PATH + path + '\n', 'utf8');
+            await fs.appendFile(this.logFileName, method + ' ' + this.BASE_PATH + path + queryData + '\n', 'utf8');
             await fs.appendFile(this.logFileName, JSON.stringify(data2send) + '\n', 'utf8');
             await fs.appendFile(this.logFileName, '   equivale a:\n', 'utf8');
         }
         var reqParams = {
-            method: method || 'POST',
+            method,
             headers: {
                 'Content-Type': tipo == 'text' ? 'text' : 'application/x-www-form-urlencoded',
-                'Content-Length': Buffer.byteLength(postData),
+                ...(postData != null ? {'Content-Length': Buffer.byteLength(postData)} : {}),                
                 ...headers
             },
-            path: this.BASE_PATH + path + (method == 'GET' ? '?' + postData : ''),
+            path: this.BASE_PATH + path + queryData,
         };
         if (this.logFileName) {
             await fs.appendFile(this.logFileName, JSON.stringify(reqParams, null, '  ') + '\n', 'utf8');
@@ -63,7 +65,7 @@ export class Requester {
                     reject(err);
                 });
             });
-            if (method != 'GET') {
+            if (postData != null) {
                 req.write(postData);
             }
             req.end();

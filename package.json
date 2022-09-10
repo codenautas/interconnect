@@ -1,7 +1,7 @@
 {
   "name": "interconnect",
   "description": "connection between servers",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "author": "Codenautas <codenautas@googlegroups.com>",
   "license": "MIT",
   "files": [
@@ -17,13 +17,14 @@
   "dependencies": {
   },
   "devDependencies": {
-    "@types/express": "^4.17.11",
-    "@types/mocha": "^8.2.2",
-    "@types/node": "^15.0.1",
-    "express": "^4.17.1",
-    "mocha": "^8.3.2",
+    "@types/express": "^4.17.13",
+    "@types/express-serve-static-core": "^4.17.30",
+    "@types/mocha": "^9.1.1",
+    "@types/node": "^18.7.16",
+    "express": "^4.18.1",
+    "mocha": "^10.0.0",
     "nyc": "^15.1.0",
-    "typescript": "~4.2.4"
+    "typescript": "~4.8.3"
   },
   "main": "lib/interconnect.js",
   "types": "lib/interconnect.d.ts",

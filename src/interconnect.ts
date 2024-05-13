@@ -1,11 +1,13 @@
 "use strict";
 
 import {promises as fs} from "fs"
-import * as http from "https"
+import { IncomingHttpHeaders } from "http";
+import * as http from "http"
 import * as querystring from "querystring"
 
-export type TiposPaquete = 'text' | ''
+export type TiposPaquete = 'text' | 'urlencoded'
 export type Verbs = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+export type TiposResultado = 'json' | '--json' | 'headers'
 
 export function conclude(resolve: () => void, reject: (err?: Error | undefined) => void, message?: string): (err?: Error | undefined) => void{
     return function (err) {
@@ -30,7 +32,8 @@ export class Requester {
         data2send: T2Send, 
         headers: http.RequestOptions['headers'], 
         tipo?: TiposPaquete, 
-        method?: Verbs | null
+        method?: Verbs | null,
+        tiposResultados?: TiposResultado | null
     ):Promise<TRec> {
         method = method || 'POST'
         const postData = method == 'GET' ? null : tipo == 'text' ? JSON.stringify(data2send) : querystring.stringify(data2send)
@@ -53,14 +56,19 @@ export class Requester {
         if (this.logFileName) {
             await fs.appendFile(this.logFileName, JSON.stringify(reqParams, null, '  ') + '\n', 'utf8');
         }
-        var result = await new Promise<string>((resolve, reject) => {
+        var result = await new Promise<string|{statusCode:number|undefined, headers:IncomingHttpHeaders}>((resolve, reject) => {
             var req = http.request(this.URL, reqParams, (res) => {
-                res.on('data', (chunk) => {
-                    data.push(chunk);
-                });
-                res.on('end', () => {
-                    resolve(data.join(''));
-                });
+                if (tiposResultados == 'headers') {
+                    var {statusCode, headers} = res;
+                    resolve({statusCode, headers});
+                } else {
+                    res.on('data', (chunk) => {
+                        data.push(chunk);
+                    });
+                    res.on('end', () => {
+                        resolve(data.join(''));
+                    });
+                }
                 res.on('error', (err) => {
                     reject(err);
                 });
@@ -70,7 +78,8 @@ export class Requester {
             }
             req.end();
         });
-        var text = result;
+        if (tiposResultados == 'headers') return result as TRec;
+        var text = result as string;
         if (this.logFileName) {
             await fs.appendFile(this.logFileName, text + '\n\n', 'utf8');
         }

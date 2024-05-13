@@ -4,14 +4,14 @@
         "outDir": "lib",
         "module": "umd",
         "target": "esnext",
-        "sourceMap": true,
+        "inlineSourceMap": true,
         "moduleResolution": "node",
         "lib": [ "ES2022" ],
         "typeRoots" : ["node_modules/@types", "node_modules/types.d.ts/modules", "./types"],
         "strict": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
-        "baseUrl": ".",
+        "baseUrl": "."
     },
     "include":[
         "src/*.ts"
